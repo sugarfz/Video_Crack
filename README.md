@@ -11,4 +11,4 @@ Version: V1.0
 Support for zhihu and iqiyi video download.
 
 # GUI:
-![img](./Screenshot/Screenshot1.png)
+![img](./screenshot/gui.png)
