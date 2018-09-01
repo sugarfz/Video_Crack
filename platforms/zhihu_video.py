@@ -1,6 +1,4 @@
-import re
 import json
-import threading
 from utils import *
 
 
@@ -72,63 +70,17 @@ def get_m3u8_url(url, video_dpi):
 		if data and 'playlist' in data.keys():
 			m3u8_url = data.get('playlist').get(video_dpi).get('play_url')
 			return m3u8_url
-	except Exception:
+	except RequestException:
 		return None
 
 
-def download_m3u8(m3u8_url, video_url, video_count, path, video_dpi_str):
-	print('准备下载 ', video_url)
-	insert_text = '准备下载 ' + video_url + '\n'
-	gui.GUIOperate.write_scrolled_text(insert_text)
-	download_path = path + '/'
-	try:
-		all_content = get_m3u8_content(m3u8_url)
-		file_line = all_content.split('\n')  # 读取文件里的每一行
-		# 通过判断文件头来确定是否是M3U8文件
-		if file_line[0] != '#EXTM3U':
-			raise BaseException('非M3U8链接')
-		else:
-			unknow = True  # 用来判断是否找到了下载的地址
-			threads = []  # 定义线程池
-			for index, line in enumerate(file_line):
-				if 'EXTINF' in line:
-					unknow = False
-					c_fule_name = str(file_line[index + 1]).split('?', 1)[0]
-					source_path = c_fule_name.split('-', 1)[0]  # 区分不同源的视频流
-					th = threading.Thread(target=download_ts, args=(m3u8_url, file_line, c_fule_name, download_path, index,))
-					threads.append(th)
-			if unknow:
-				raise BaseException('未找到对应的下载链接')
-			else:
-				for t in threads:  # 启动线程
-					t.start()
-				for t in threads:  # 等待子线程结束
-					t.join()
-				print('下载完成，正在合并视频流...')
-				gui.GUIOperate.write_scrolled_text('下载完成，正在合并视频流...\n')
-				merge_file(download_path, source_path, video_count, video_dpi_str)
-	except Exception:
-		return None
-
-
-def merge_file(download_path, source_path, video_count, video_dpi_str):
-	os.chdir(download_path)  # 修改当前工作目录
-	video_name = 'video' + str(video_count) + '_' + video_dpi_str + '_' + source_path + '.mp4'
-	merge_cmd = 'copy /b ' + source_path + '*.ts ' + video_name
-	del_cmd = 'del /Q ' + source_path + '*.ts'
-	os.system(merge_cmd)
-	os.system(del_cmd)
-	print('合并完成，请欣赏 ', video_name)
-	insert_text = '合并完成，请欣赏 ' + video_name + '\n\n'
-	gui.GUIOperate.write_scrolled_text(insert_text)
-
-
-def run(url, path, video_dpi):
+def run(url, path, name):
 	video_count = 0
-	video_dpi_str = video_dpi[-2:].lower()
+	options = ['高清HD', '标清SD', '普清LD']
+	video_dpi_str = options[0][-2:].lower()  # 默认下载高清
 	if is_valid(url, path):  # 判断有效性
 		# 改变输入框文本颜色
-		gui.GUIOperate.change_entry_fg('black')
+		gui.GUIOperate.change_entry_fg('#F5F5F5')
 		html = get_page(url)
 		if html:
 			video_urls = parse_page(html)
@@ -139,11 +91,11 @@ def run(url, path, video_dpi):
 						m3u8_url = get_m3u8_url(real_url, video_dpi_str)
 						if m3u8_url:
 							video_count += 1
-							download_m3u8(m3u8_url, video_url, video_count, path, video_dpi_str)
+							download_m3u8(m3u8_url, path, name, str(video_count))
 
 
 if __name__ == '__main__':
 	_url = 'https://www.zhihu.com/question/279405182/answer/410204397'
 	_path = 'E:/PycharmProjects/Video_Crack/video'
-	_video_dpi = '标清SD'
-	run(_url, _path, _video_dpi)
+	_name = 'video'
+	run(_url, _path, _name)

@@ -12,6 +12,6 @@ def gif_to_py(picture_name):
 
 
 if __name__ == '__main__':
-	picture = ['python_logo']
+	picture = ['cat_logo']
 	for picture_position in picture:
 		gif_to_py(picture_position)
